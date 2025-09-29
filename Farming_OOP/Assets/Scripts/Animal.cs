@@ -4,9 +4,21 @@ using UnityEngine;
 
 public abstract class Animal : MonoBehaviour
 {
+    #region Enum
     /*=======================
       ENUM & STATE HANDLING
      ========================*/
+    // Food types for different animals
+    public enum FeedObjectType
+    {
+        Hay, // Cow
+        Corn, // Chicken
+        Leaves, // Goat
+        Generic, //default
+        RottenFood // bad food
+    }
+
+    // Possible states for an animal
     public enum AnimalState
     {
         Happy,
@@ -37,6 +49,9 @@ public abstract class Animal : MonoBehaviour
         return AnimalState.Neutral;
     }
 
+    #endregion
+
+    #region Fields
     /*=======================
      FIELDS & PROPERTIES
     ========================*/
@@ -44,55 +59,80 @@ public abstract class Animal : MonoBehaviour
     public string AnimalName
     {
         get { return _animalName; }
-        set { _animalName = string.IsNullOrEmpty(value) ? "Unknown" : value; }
+        protected set { _animalName = string.IsNullOrEmpty(value) ? "Unknown" : value; }
     }
+
+    private static int _nextID = 1; 
 
     private int _ID;
-    public int AnimalID
+    public int AnimalID => _ID; // read-only ID
+    // Auto-assign unique ID
+    protected Animal()
     {
-        get { return _ID; }
-        set { _ID = Mathf.Max(0, value); }
+        _ID = _nextID++;
     }
 
+    // Health, Hunger, Happiness levels
     private int _health;
     public int Health
     {
         get { return _health; }
-        set { _health = Mathf.Max(0, value); }
+        protected set { _health = Mathf.Max(0, value); }
     }
 
     private int _hunger;
     public int Hunger
     {
         get { return _hunger; }
-        set { _hunger = Mathf.Clamp(value, 0, 50); }
+        protected set { _hunger = Mathf.Clamp(value, 0, 100); }
     }
 
     private int _happiness;
     public int Happiness
     {
         get { return _happiness; }
-        set { _happiness = Mathf.Clamp(value, 0, 50); }
+        protected set { _happiness = Mathf.Clamp(value, 0, 100); }
     }
 
     private int _feedAmount = 1;
     public int FeedAmount
     {
         get => _feedAmount;
-        set => _feedAmount = Mathf.Clamp(value, 1, 10);
+        private set => _feedAmount = Mathf.Clamp(value, 1, 10);
     }
 
-    private string _feedObject;
-    public string FeedObject
+    private FeedObjectType _preferredFood = FeedObjectType.Generic;
+    public FeedObjectType PreferredFood
     {
-        get { return _feedObject; }
-        set { _feedObject = string.IsNullOrEmpty(value) ? "Food" : value; }
+        get => _preferredFood;
+        protected set => _preferredFood = value;
     }
 
+    protected FeedObjectType LastFedFood { get; private set; } = FeedObjectType.Generic;
 
+    #endregion
+
+    #region Init
+
+    /*=======================
+      INITIALIZATION
+     ========================*/
+    public void InitAnimal(string name, int health, int hunger, int happiness, FeedObjectType preferredFood)
+    {
+        AnimalName = name;
+        Health = health;
+        Hunger = hunger;
+        Happiness = happiness;
+        PreferredFood = preferredFood;
+    }
+    #endregion
+
+
+    #region Behaviors
     /*=======================
       BEHAVIORS / ACTIONS
      ========================*/
+    // Adjust Hunger and Happiness levels
     public virtual void AdjustHunger(int amount) // decrease Hunger by specified amount
     {
         Hunger = Mathf.Max(0, Hunger - amount);
@@ -101,7 +141,7 @@ public abstract class Animal : MonoBehaviour
 
     public virtual void AdjustHappiness() //  increase Happiness by 3
     {
-        Happiness = Mathf.Clamp(Happiness + 3, 0, 50);
+        Happiness = Mathf.Clamp(Happiness + 3, 0, 100);
         Debug.Log($"{AnimalName} Happiness: {Happiness}");
     }
 
@@ -111,19 +151,36 @@ public abstract class Animal : MonoBehaviour
         Debug.Log($"{AnimalName} Health: {Health}");
     }
 
-    public void Feed(string food, int amount) 
+    // Feed the animal if the food matches its preference
+    public void Feed(FeedObjectType food, int amount)
     {
-        FeedObject = string.IsNullOrEmpty(food) ? "Food" : food;
-        FeedAmount = Mathf.Clamp(amount, 1, 10);
-        
-        AdjustHunger(FeedAmount);
-        AdjustHappiness();
-        Debug.Log($"{AnimalName} was fed {FeedAmount} of {FeedObject}.");
+        LastFedFood = food; // track last fed food
+        FeedAmount = Mathf.Clamp(amount, 1, 10); // ensure amount is between 1 and 10
+
+        if (food == PreferredFood) // preferred food - normal hunger decrease and happiness increase
+        {
+            AdjustHunger(FeedAmount);
+            AdjustHappiness();
+            Debug.Log($"{AnimalName} happily ate {FeedAmount} of {food}!");
+        }
+        else if (food == FeedObjectType.RottenFood) // bad food - big happiness drop
+        {
+            Happiness = Mathf.Clamp(Happiness - 20, 0, 100);
+            Debug.Log($"{AnimalName} was fed with rotten food: {food}. Yuck! Current Happiness: {Happiness}");
+        }
+        else // non-preferred food - half hunger decrease and no happiness change
+        {
+            AdjustHunger(FeedAmount / 2);
+            Debug.Log($"{AnimalName} reluctantly ate {FeedAmount} of {food}... Current Happiness: {Happiness}");
+        }
     }
 
-
+    // Each animal makes a unique sound
     public abstract void MakeSound();
-    
+
+    // Each animal produces some resource
+    public abstract string Produce();
+
     public virtual void Sleep() // sleeping increases both hunger and happiness slightly
     {
         Hunger = Mathf.Clamp(Hunger + 5, 0, 50);
@@ -151,7 +208,10 @@ public abstract class Animal : MonoBehaviour
                 break;
         }
     }
+    #endregion
 
+
+    #region Condition
     /*========================
      CONDITION CHECKS
      ========================*/
@@ -159,4 +219,6 @@ public abstract class Animal : MonoBehaviour
     public bool IsAnimalHungry() => Hunger >= 15;
     public bool IsAnimalSad() => Happiness < 15;
     public bool IsAlive => Health > 0;
+
+    #endregion
 }

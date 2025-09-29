@@ -2,45 +2,37 @@ using UnityEngine;
 
 class Goat : Animal
 {
+    #region Production
     private int _woolProduced;
     public int WoolProduced
     {
-        get { return _woolProduced; }
-        set
-        {
-            if (value > 999) _woolProduced = 999;
-            else if (value < 0) _woolProduced = 0;
-            else _woolProduced = value;
-        }
+        get => _woolProduced;
+        private set => _woolProduced = Mathf.Clamp(value, 0, 999);
     }
 
-    public Goat(string name = "Billy", int health = 45, int hunger = 10, int happiness = 10)
-    {
-        AnimalName = string.IsNullOrEmpty(name) ? "Billy" : name;
-        Health = health;
-        Hunger = hunger;
-        Happiness = happiness;
-        WoolProduced = 0;
-    }
-
-    /*public void ProduceWool()
+    public override string Produce() // goat produce wool
     {
         WoolProduced++;
-        Debug.Log($"{AnimalName} produced wool! Total wool: {WoolProduced}");
-    }*/
+        Debug.Log($"{AnimalName} has been sheared! Total wool: {WoolProduced} units");
+        return "Wool";
+    }
+    #endregion
 
+    #region Fields
     public override void AdjustHunger(int amount)
     {
         Hunger = Mathf.Max(0, Hunger - amount);
-        Debug.Log($"{AnimalName} munches on grass. Hunger: {Hunger}");
+        Debug.Log($"{AnimalName} munches on {LastFedFood}. Hunger: {Hunger}");
     }
 
     public override void AdjustHappiness()
     {
-        Happiness = Mathf.Clamp(Happiness + 3, 0, 50);
+        Happiness = Mathf.Clamp(Happiness + 3, 0, 100);
         Debug.Log($"{AnimalName} jumps on rocks happily! Happiness: {Happiness}");
     }
+    #endregion
 
+    #region Behaviors
     public override void MakeSound() // goat sound
     {
         if (Happiness >= 40)
@@ -53,11 +45,13 @@ class Goat : Animal
 
     public override void Sleep() // goat sleep
     {
-        Hunger = Mathf.Clamp(Hunger + 4, 0, 50);
-        Happiness = Mathf.Clamp(Happiness + 3, 0, 50);
+        Hunger = Mathf.Clamp(Hunger + 4, 0, 100);
+        Happiness = Mathf.Clamp(Happiness + 3, 0, 100);
         Debug.Log($"{AnimalName} curls up near the barn and sleeps...");
     }
+    #endregion
 
+    #region Status
     public override void GetStatus() // goat status
     {
         Debug.Log($"{AnimalName} -> Hunger: {Hunger} | Happiness: {Happiness} | Wool: {WoolProduced}");
@@ -65,6 +59,7 @@ class Goat : Animal
 
     public bool IsGoatHappy()
     {
-        return Happiness >= 15;
+        return IsAnimalHappy();
     }
+    #endregion
 }

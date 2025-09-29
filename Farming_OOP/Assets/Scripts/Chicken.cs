@@ -2,46 +2,37 @@ using UnityEngine;
 
 class Chicken : Animal
 {
+    #region Production
     private int _eggCount;
     public int EggCount
     {
-        get { return _eggCount; }
-        set
-        {
-            if (value > 999) _eggCount = 999;
-            else if (value < 0) _eggCount = 0;
-            else _eggCount = value;
-        }
+        get => _eggCount;
+        private set => _eggCount = Mathf.Clamp(value, 0, 999);
     }
 
-    //  Constructor
-    public Chicken(string name = "Nugget", int health = 50, int hunger = 10, int happiness = 10)
-    {
-        AnimalName = string.IsNullOrEmpty(name) ? "Nugget" : name;
-        Health = health;
-        Hunger = hunger;
-        Happiness = happiness;
-        EggCount = 0;
-    }
-
-    /*blic void LayEgg() //
+    public override string Produce() //chicken produce egg
     {
         EggCount++;
-        Debug.Log($"{AnimalName} laid an egg! Total eggs: {EggCount}");
-    }*/
+        Debug.Log($"{AnimalName} laid an egg! Total eggs: {EggCount} eggs");
+        return "Egg";
+    }
+    #endregion
 
+    #region Fields
     public override void AdjustHunger(int amount) // species hunger decrease
     {
         Hunger = Mathf.Max(0, Hunger - amount);
-        Debug.Log($"{AnimalName} pecks some corn. Hunger: {Hunger}");
+        Debug.Log($"{AnimalName} pecks some {LastFedFood}. Hunger: {Hunger}");
     }
 
     public override void AdjustHappiness() // species happiness increase
     {
-        Happiness = Mathf.Clamp(Happiness + 3, 0, 50);
+        Happiness = Mathf.Clamp(Happiness + 3, 0, 100);
         Debug.Log($"{AnimalName} flaps wings happily! Happiness: {Happiness}");
     }
+    #endregion
 
+    #region Behaviors
     public override void MakeSound() //chicken sound
     {
         if (Happiness >= 40)
@@ -55,11 +46,14 @@ class Chicken : Animal
     // chicken sleep where
     public override void Sleep()
     {
-        Hunger = Mathf.Clamp(Hunger + 3, 0, 50);
-        Happiness = Mathf.Clamp(Happiness + 2, 0, 50);
+        Hunger = Mathf.Clamp(Hunger + 3, 0, 100);
+        Happiness = Mathf.Clamp(Happiness + 2, 0, 100);
         Debug.Log($"{AnimalName} is roosting...");
     }
+    #endregion
 
+
+    #region Status
     // chicken status
     public override void GetStatus()
     {
@@ -68,6 +62,7 @@ class Chicken : Animal
 
     public bool IsChickenHappy()
     {
-        return Happiness >= 15;
+        return IsAnimalHappy();
     }
+    #endregion
 }

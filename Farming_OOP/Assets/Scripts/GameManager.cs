@@ -32,15 +32,15 @@ public class GameManager : MonoBehaviour
         {
             Animal a = Instantiate(animalPrefabs[i], spawnPos + new Vector3(i * offset, 0, 0), Quaternion.identity);
 
-            // ตั้งชื่อให้ตรงกับชนิด
-            if (a is Cow) a.AnimalName = "Milky";
-            else if (a is Chicken) a.AnimalName = "Nugget";
-            else if (a is Goat) a.AnimalName = "Billy";
-            else a.AnimalName = $"Animal_{i}"; // fallback
-
-            a.Health = 50;
-            a.Hunger = 10;
-            a.Happiness = 10;
+            // Init แต่ละสัตว์ด้วยค่าพื้นฐาน + PreferredFood
+            if (a is Cow)
+                a.InitAnimal("Milky", 50, 10, 10, Animal.FeedObjectType.Hay);
+            else if (a is Chicken)
+                a.InitAnimal("Nugget", 40, 8, 12, Animal.FeedObjectType.Corn);
+            else if (a is Goat)
+                a.InitAnimal("Billy", 45, 9, 15, Animal.FeedObjectType.Leaves);
+            else
+                a.InitAnimal($"Animal_{i}", 50, 10, 10, Animal.FeedObjectType.Generic);
 
             AddAnimal(a);
         }
@@ -53,28 +53,27 @@ public class GameManager : MonoBehaviour
         // ===== Do actions =====
         foreach (var a in animals)
         {
-            
             switch (a)
             {
                 case Cow cow:
-                    cow.Feed("Grass", 3);
+                    cow.Feed(Animal.FeedObjectType.Hay, 3);
                     break;
 
                 case Chicken chicken:
-                    chicken.Feed("Corn", 2);
+                    chicken.Feed(Animal.FeedObjectType.Corn, 2);
                     break;
 
                 case Goat goat:
-                    goat.Feed("Leaves", 4);
+                    goat.Feed(Animal.FeedObjectType.Leaves, 4);
                     break;
 
                 default:
-                    a.Feed("Food", 1);
+                    a.Feed(Animal.FeedObjectType.Generic, 1);
                     break;
             }
 
-
             a.MakeSound();
+            a.Produce();
             a.Sleep();
             a.GetStatus();
         }
